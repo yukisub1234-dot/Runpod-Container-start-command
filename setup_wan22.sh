@@ -227,7 +227,7 @@ download_and_rename "Comfy-Org/Wan_2.1_ComfyUI_repackaged" \
     "split_files/vae/wan_2.1_vae.safetensors" "vae" "vae.safetensors"
 
 download_and_rename "Comfy-Org/Wan_2.1_ComfyUI_repackaged" \
-    "split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" \
+    "split_files/text_encoders/umt5_xxl_fp16.safetensors" \
     "text_encoders" "text_encoder.safetensors"
 
 download_and_rename "Comfy-Org/Wan_2.2_ComfyUI_Repackaged" \
