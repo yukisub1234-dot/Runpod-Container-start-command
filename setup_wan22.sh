@@ -161,20 +161,25 @@ MANAGER_CONFIG_DIR="${COMFYUI_DIR}/user/__manager"
 MANAGER_CONFIG="${MANAGER_CONFIG_DIR}/config.ini"
 mkdir -p "$MANAGER_CONFIG_DIR"
 
-# 既存ファイルの内容に関わらず完全上書きする（混在リスクを排除）
-# ログで確認したキー: network_mode（"public" -> "offline"）
+# Manager V3.40 のログ解析結果に基づく設定:
+#   network_mode = local  : "public"(デフォルト) -> "local" でGitHub外部Fetchをスキップ
+#                           "offline" は期待通り動作しないケースあり
+#   skip_update_check = true  : カスタムノードの更新確認をスキップ
+#   update_check = none       : Manager自身の更新確認を無効化
+#   fetch_custom_node_list = false : FETCH ComfyRegistry Data（156件）を無効化
+#   skip_migration = true     : DBマイグレーション確認をスキップ
 cat > "$MANAGER_CONFIG" << 'MANAGER_CONF'
 [default]
 skip_update_check = true
 update_check = none
-network_mode = offline
+network_mode = local
+fetch_custom_node_list = false
+skip_migration = true
 MANAGER_CONF
 
-# 書き込み内容を確認（デバッグ用）
 echo "  -> ✅ config.ini を書き込みました: ${MANAGER_CONFIG}"
 echo "  -> 内容:"
 cat "$MANAGER_CONFIG" | sed 's/^/     /'
-echo "  -> network_mode の確認: $(grep network_mode "$MANAGER_CONFIG" || echo "キーなし")"
 
 
 # ==============================================================================
