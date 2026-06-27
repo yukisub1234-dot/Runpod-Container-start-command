@@ -195,7 +195,7 @@ download_and_rename() {
     {
         local tmp_dir
         tmp_dir=$(mktemp -d)
-        if ! huggingface-cli download "${repo_id}" "${hf_file_path}" --local-dir "${tmp_dir}"; then
+        if ! hf download "${repo_id}" "${hf_file_path}" --local-dir "${tmp_dir}"; then
             echo "❌ ERROR: ${hf_file_path} のダウンロードに失敗" >&2
             rm -rf "${tmp_dir}"; exit 1
         fi
