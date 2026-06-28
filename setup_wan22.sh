@@ -59,10 +59,11 @@ MANAGER_CONF
 #   --smart-memory-sharing : VRAMとシステムRAM間のテンソル移動を最適化
 # ==============================================================================
 echo ""
-echo "⚙️  [Step 2/5] 起動引数を設定中（OOM/FP8最適化）..."
+echo "⚙️  [Step 2/5] 起動引数を設定中（124GiB RAM最適化・VRAM防御モード）..."
 cat > "$COMFYUI_ARGS_FILE" << 'ARGS'
 --fp8_e4m3fn-unet
 --fp8_e4m3fn-text-enc
+--lowvram
 --preview-method auto
 ARGS
 echo "  -> ✅ 設定完了: ${COMFYUI_ARGS_FILE}"
