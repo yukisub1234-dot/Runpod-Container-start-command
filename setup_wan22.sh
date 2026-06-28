@@ -61,8 +61,8 @@ MANAGER_CONF
 echo ""
 echo "⚙️  [Step 2/5] 起動引数を設定中（OOM/FP8最適化）..."
 cat > "$COMFYUI_ARGS_FILE" << 'ARGS'
---fp8_e4m3fn
---smart-memory-sharing
+--fp8_e4m3fn-unet
+--fp8_e4m3fn-text-enc
 --preview-method auto
 ARGS
 echo "  -> ✅ 設定完了: ${COMFYUI_ARGS_FILE}"
