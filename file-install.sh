@@ -10,8 +10,16 @@ import subprocess
 # ====================================================================
 # 1. 共通設定（APIトークンを入力してください）
 # ====================================================================
-CIVITAI_TOKEN = "ここに_Civitai_のAPIキーを入力"
-HF_TOKEN = "hf_ここに_HuggingFace_のトークンを入力"
+CIVITAI_TOKEN = os.environ.get("civitai_token", "")
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+COMFYUI_ROOT = "/workspace/ComfyUI"
+
+# トークンが取得できているか簡易チェック
+if not CIVITAI_TOKEN:
+    print("ℹ️ Civitai トークンは環境変数から検出されませんでした（空のまま続行します）")
+if not HF_TOKEN:
+    print("ℹ️ Hugging Face トークンは環境変数から検出されませんでした（空のまま続行します）")
 
 COMFYUI_ROOT = "/workspace/ComfyUI"
 
