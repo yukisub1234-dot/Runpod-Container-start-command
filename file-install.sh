@@ -21,7 +21,6 @@ COMFYUI_ROOT = "/workspace/ComfyUI"
 #    - target    : Civitaiは「Version ID」、HFは「リポジトリ名」
 #    - file      : Civitaiは「保存名」、HFは「リポジトリ上の正確なファイル名」
 #    - path      : 保存先フォルダのパス
-#    - rename_to : (任意) HFのファイル名をローカルで変更したい場合のみ記述
 # ====================================================================
 DOWNLOAD_LIST = [
     {
@@ -104,15 +103,6 @@ def download_item(item):
         print(f"📥 実行コマンド (hf_transfer モード): {' '.join(cmd)}")
         subprocess.run(cmd, env=env)
         
-        # ダウンロード後の自動リネーム処理 (設定されている場合)
-        if rename_to:
-            old_path = os.path.join(save_dir, filename)
-            new_path = os.path.join(save_dir, rename_to.strip())
-            if os.path.exists(old_path):
-                os.rename(old_path, new_path)
-                print(f"🔄 ファイルをリネームしました: {filename} -> {rename_to}")
-            else:
-                print(f"⚠️ リネーム対象のファイルが見つかりません: {old_path}")
                 
     else:
         print(f"❌ 不明なソースタイプです: {source} (civitai または hf を指定してください)")
