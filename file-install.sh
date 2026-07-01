@@ -4,8 +4,31 @@ import os
 import sys
 import subprocess
 
+
+
 # ====================================================================
-# 1. 秘密鍵（環境変数）からトークンを自動取得
+# 1. ダウンロードしたいファイルのリスト
+# ====================================================================
+DOWNLOAD_LIST = [
+    {
+        "source": "civitai",
+        "target": "123456",  # 例: CivitaiのバージョンID
+        "file": "xxx_lora.safetensors",
+        "type": "lora",
+        "rename_to": "xxxxx" # 保存名
+    },
+    {
+        "source": "hf",
+        "target": "Kijai/WanVideo_comfy",
+        "file": "Wan2.1-Diffusion-14B-Text2Video-720P_quant2.sft",
+        "type": "diffusion",
+        "rename_to": "xxxxx"
+    },
+]
+
+
+# ====================================================================
+# 2. 秘密鍵（環境変数）からトークンを自動取得
 # ====================================================================
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
@@ -18,23 +41,15 @@ if not HF_TOKEN:
     print("ℹ️ Hugging Face トークンは環境変数から検出されませんでした")
 
 # ====================================================================
-# 2. ダウンロードしたいファイルのリスト
+# 種類に応じたディレクトリの定義（マッピング）
 # ====================================================================
-DOWNLOAD_LIST = [
-    {
-        "source": "civitai",
-        "target": "", 
-        "file": "xxx_lora.safetensors",
-        "path": f"{COMFYUI_ROOT}/models/loras"
-    },
-    {
-        "source": "hf",
-        "target": "Kijai/WanVideo_comfy",
-        "file": "Wan2.1-Diffusion-14B-Text2Video-720P_quant2.sft",
-        "path": f"{COMFYUI_ROOT}/models/checkpoints",
-        "rename_to": "wan2.1_720p_q2.sft"
-    },
-]
+DIR_MAPPING = {
+    "diffusion": f"{COMFYUI_ROOT}/models/diffusion_models", # Wanのメインモデル(SFT)用
+    "checkpoint": f"{COMFYUI_ROOT}/models/checkpoints",
+    "lora": f"{COMFYUI_ROOT}/models/loras",
+    "clip": f"{COMFYUI_ROOT}/models/text_encoders",         # UMTextEncoder や CLIP 用
+    "vae": f"{COMFYUI_ROOT}/models/vae",                   # VAE用
+}
 
 # ====================================================================
 # 3. 自動判別・ダウンロード処理ロジック
@@ -52,11 +67,18 @@ def download_item(item):
     source = item["source"].lower().strip()
     target = item["target"].strip()
     filename = item["file"].strip()
-    save_dir = item["path"].strip()
     rename_to = item.get("rename_to")
     
+    # 種類の判定と保存先ディレクトリの自動決定
+    file_type = item.get("type", "").lower().strip()
+    if file_type in DIR_MAPPING:
+        save_dir = DIR_MAPPING[file_type]
+    else:
+        save_dir = item.get("path", f"{COMFYUI_ROOT}/models/checkpoints").strip()
+        print(f"⚠️ 種類 '{file_type}' が定義されていないため、デフォルトパスを使用します: {save_dir}")
+
     os.makedirs(save_dir, exist_ok=True)
-    print(f"\n🚀 スタート: [{source.upper()}] -> {filename}")
+    print(f"\n🚀 スタート: [{source.upper()}] ({file_type}) -> {filename}")
 
     # ----------------------------------------------------------------
     # Civitai の処理 (リダイレクト・認証に強い wget で確実に落とす)
@@ -68,7 +90,6 @@ def download_item(item):
         
         save_path = os.path.join(save_dir, filename)
         
-        # リダイレクトを完全に追跡し、403を回避するwgetオプション
         cmd = [
             "wget", 
             "--no-check-certificate",
@@ -90,7 +111,6 @@ def download_item(item):
         if HF_TOKEN:
             env["HF_TOKEN"] = HF_TOKEN
             
-        # hf_transfer 高速化モードを有効化
         env["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
             
         cmd = [
@@ -103,19 +123,22 @@ def download_item(item):
         
         print(f"📥 実行コマンド (hf_transfer モード): {' '.join(cmd)}")
         subprocess.run(cmd, env=env)
-        
-        # ダウンロード後の自動リネーム処理
-        if rename_to:
-            old_path = os.path.join(save_dir, filename)
-            new_path = os.path.join(save_dir, rename_to.strip())
-            if os.path.exists(old_path):
-                os.rename(old_path, new_path)
-                print(f"🔄 ファイルをリネームしました: {filename} -> {rename_to}")
-            else:
-                print(f"⚠️ リネーム対象のファイルが見つかりません: {old_path}")
                 
     else:
         print(f"❌ 不明なソースタイプです: {source} (civitai または hf を指定してください)")
+        return
+
+    # ----------------------------------------------------------------
+    # [共通処理] ダウンロード後の自動リネーム（Civitai / HF 両対応）
+    # ----------------------------------------------------------------
+    if rename_to:
+        old_path = os.path.join(save_dir, filename)
+        new_path = os.path.join(save_dir, rename_to.strip())
+        if os.path.exists(old_path):
+            os.rename(old_path, new_path)
+            print(f"🔄 ファイルをリネームしました: {filename} -> {rename_to}")
+        else:
+            print(f"⚠️ リネーム対象のファイルが見つかりません: {old_path}")
 
 if __name__ == "__main__":
     for item in DOWNLOAD_LIST:
