@@ -10,7 +10,7 @@ import subprocess
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
-COMFYUI_ROOT = "/ComfyUI"
+COMFYUI_ROOT = "/workspace/ComfyUI"
 
 if not CIVITAI_TOKEN:
     print("ℹ️ Civitai トークンは環境変数から検出されませんでした")
