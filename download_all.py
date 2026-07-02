@@ -47,6 +47,8 @@ DIR_MAPPING = {
 MIN_VALID_SIZE_BYTES = 1024 * 1024  # 1MB未満は失敗扱い
 HASH_CHUNK_SIZE = 8 * 1024 * 1024   # 8MBずつ読んでハッシュ計算(メモリ節約)
 
+CONFIGS_DIR = Path(__file__).resolve().parent / "configs"
+
 # 重複防止: 同一の保存先パスに対して同時にDLが走らないようにするロック
 _path_locks: dict[str, threading.Lock] = {}
 _path_locks_guard = threading.Lock()
@@ -275,13 +277,73 @@ def process_item(item: dict) -> dict:
 
 
 # ====================================================================
+# プリセット(configs/以下のJSON)解決・一覧表示
+# ====================================================================
+def list_available_configs():
+    if not CONFIGS_DIR.exists():
+        log(f"⚠️ configsディレクトリが見つかりません: {CONFIGS_DIR}")
+        return
+
+    files = sorted(CONFIGS_DIR.glob("*.json"))
+    if not files:
+        log(f"⚠️ {CONFIGS_DIR} にプリセットがありません。")
+        return
+
+    log(f"\n📂 利用可能なプリセット ({CONFIGS_DIR}):\n")
+    for f in files:
+        desc = ""
+        count = 0
+        try:
+            with open(f, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+                desc = data.get("_description", "")
+                count = len(data.get("models", []))
+        except Exception:
+            pass
+        log(f"  - {f.stem:<20} {desc}  ({count} モデル)")
+    log("")
+
+
+def resolve_config_path(name: str):
+    """
+    以下の優先順位で設定ファイルを解決する:
+      1. 指定パスがそのまま存在する場合はそれを使う(例: ./my.json, /abs/path.json)
+      2. configs/<name>.json
+      3. configs/<name>  (拡張子込みで指定された場合)
+    見つからなければ None を返す。
+    """
+    direct = Path(name)
+    if direct.exists():
+        return direct
+
+    candidate = CONFIGS_DIR / f"{name}.json"
+    if candidate.exists():
+        return candidate
+
+    candidate2 = CONFIGS_DIR / name
+    if candidate2.exists():
+        return candidate2
+
+    return None
+
+
+# ====================================================================
 # メイン
 # ====================================================================
 def main():
     parser = argparse.ArgumentParser(description="ComfyUI モデル一括ダウンローダー")
-    parser.add_argument("--config", default="models.json", help="モデルリストのJSONファイル")
+    parser.add_argument(
+        "--config",
+        default="models.json",
+        help="モデルリストのJSONファイル。ファイルパス、または configs/ 内のプリセット名(拡張子省略可)",
+    )
     parser.add_argument("--workers", type=int, default=3, help="並列ダウンロード数")
+    parser.add_argument("--list", action="store_true", help="利用可能なプリセット一覧を表示して終了")
     args = parser.parse_args()
+
+    if args.list:
+        list_available_configs()
+        return
 
     if not CIVITAI_TOKEN:
         log("ℹ️ CIVITAI_TOKEN 未設定(非公開モデルはDL不可)")
@@ -290,10 +352,13 @@ def main():
 
     check_network_volume()
 
-    config_path = Path(args.config)
-    if not config_path.exists():
-        log(f"❌ 設定ファイルが見つかりません: {config_path}")
+    config_path = resolve_config_path(args.config)
+    if config_path is None:
+        log(f"❌ 設定ファイルが見つかりません: {args.config}")
+        list_available_configs()
         sys.exit(1)
+
+    log(f"📄 使用する設定ファイル: {config_path}")
 
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
