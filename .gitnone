@@ -1,0 +1,5 @@
+*.safetensors
+*.ckpt
+*.pt
+.env
+download.log
