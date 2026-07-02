@@ -1,0 +1,28 @@
+{
+  "_comment": "type: checkpoint | lora | vae | clip | diffusion | upscale | controlnet",
+  "_comment2": "sha256 は任意。Civitaiのモデル詳細ページ or HFのファイル情報に記載されているハッシュ値を貼ると整合性検証されます",
+  "models": [
+    {
+      "source": "civitai",
+      "target": "XXXXXXX",
+      "file": "realistic_checkpoint.safetensors",
+      "type": "checkpoint",
+      "sha256": ""
+    },
+    {
+      "source": "civitai",
+      "target": "YYYYYYY",
+      "file": "style_lora.safetensors",
+      "type": "lora",
+      "rename_to": "my_style.safetensors",
+      "sha256": ""
+    },
+    {
+      "source": "hf",
+      "target": "Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+      "file": "split_files/vae/wan_2.1_vae.safetensors",
+      "type": "vae",
+      "sha256": ""
+    }
+  ]
+}
